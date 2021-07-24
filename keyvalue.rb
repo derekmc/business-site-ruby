@@ -5,7 +5,7 @@
 # file, and old entries are not removed
 
 class KeyValue
-  def initialize(filename="appdata.txt", savemode=:autosave)
+  def initialize(filename="appdata.txt", savemode=:autoflush)
     @filename = filename
     @savemode = savemode
     self.load
@@ -53,6 +53,7 @@ class KeyValue
         s = self.linestring(key, value)
         file.syswrite(s)
       end
+      @changes = Hash.new
     else
       puts "Cannot flush data"
     end
