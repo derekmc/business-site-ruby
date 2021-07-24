@@ -1,9 +1,15 @@
 
+# A simple keyvalue database.
+# Note that flush saves changes,
+# by appending to the end of the
+# file, and old entries are not removed
+
 class KeyValue
-  def initialize(filename="appdata.txt", saveall=1)
+  def initialize(filename="appdata.txt", savemode=:autosave)
     @filename = filename
-    @saveall = saveall
+    @savemode = savemode
     self.load
+    self.save # this rewrites the database without overwritten key entries
   end
 
   def get(k)
@@ -16,8 +22,15 @@ class KeyValue
 
   def set(k, v)
     @data[k] = v
-    if @saveall
-      save
+    case @savemode
+      when :autoflush
+        puts "flushing..."
+        self.flush
+      when :autosave
+        puts "saving..."
+        self.save
+      else
+        @changes[k] = v
     end
   end
 
@@ -25,65 +38,41 @@ class KeyValue
     file = File.new(@filename, "w")
     if file
       @data.each do |key, value|
-        x = file.syswrite("#{key}: #{value}")
-        puts x
+        s = self.linestring(key, value)
+        file.syswrite(s)
       end
     else
       puts "Cannot save data"
     end
   end
 
+  def flush
+    file = File.new(@filename, "a+")
+    if file
+      @changes.each do |key, value|
+        s = self.linestring(key, value)
+        file.syswrite(s)
+      end
+    else
+      puts "Cannot flush data"
+    end
+  end
 
   def load
     @data = Hash.new
-    @changed = Hash.new
-    if !@filname.nil? and File.exist?(@filename)
+    @changes = Hash.new
+    if not @filename.nil? and File.exist?(@filename)
       File.foreach(@filename) do |line|
         pair = line.split(":", 2)
         @data[pair[0]] = pair[1]
       end
     end
   end
-end
 
+  private
 
-=begin
-$filename = "data.keyvalue" # csv key value table
-$data = Hash.new
-$changed = Hash.new
-$saveall = 1
-
-
-def getkv(k)
-  return $data[k]
-end
-
-def setkv(k, v)
-  $data[k] = v
-  if $saveall
-    savedb
-  else
-    $changed[k] = true
+  #TODO escape certain characters like newlines.
+  def linestring(key, value)
+    return "#{key}: #{value}"
   end
 end
-
-def loaddb
-end
-
-def initdb
-  $data['count'] = 0
-end
-
-def savedb
-  file = File.new($filename, "w")
-  if file
-    $data.each do |key, value|
-      x = file.syswrite("#{key}: #{value}")
-      puts x
-    end
-  else
-    puts "Cannot save data"
-  end
-end
-
-=end
