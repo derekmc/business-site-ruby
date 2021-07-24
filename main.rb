@@ -8,12 +8,13 @@ require 'sinatra'
 
 require_relative 'keyvalue'
 
-load
+loaddb
 
 get '/' do
-  count = get("count").to_i
+  count = getkv("count").to_i
   count += 1
-  set("count", count)
-  "Hello world! #{count}"
+  setkv("count", count)
+  #"Hello world! #{count}"
+  erb :hello, :locals => {:count => count}
 end
 
