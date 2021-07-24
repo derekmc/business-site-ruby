@@ -5,7 +5,7 @@
 # file, and old entries are not removed
 
 class KeyValue
-  def initialize(filename="appdata.txt", savemode=:autoflush)
+  def initialize(filename="appdata.txt", savemode=:autoflush) # savemode :autoflush :autosave or :manual
     @filename = filename
     @savemode = savemode
     self.load
@@ -39,7 +39,7 @@ class KeyValue
     file = File.new(@filename, "w")
     if file
       @data.each do |key, value|
-        unless key.to_s.empty?
+        unless key.to_s.strip.empty?
           s = self.linestring(key, value)
           file.syswrite(s)
         end
@@ -54,7 +54,7 @@ class KeyValue
     file = File.new(@filename, "a")
     if file
       @changes.each do |key, value|
-        unless key.to_s.empty?
+        unless key.to_s.strip.empty?
           s = self.linestring(key, value)
           file.syswrite(s)
         end
