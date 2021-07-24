@@ -22,6 +22,7 @@ class KeyValue
 
   def set(k, v)
     @data[k] = v
+    @changes[k] = v
     case @savemode
       when :autoflush
         puts "flushing..."
@@ -38,20 +39,25 @@ class KeyValue
     file = File.new(@filename, "w")
     if file
       @data.each do |key, value|
-        s = self.linestring(key, value)
-        file.syswrite(s)
+        unless key.to_s.empty?
+          s = self.linestring(key, value)
+          file.syswrite(s)
+        end
       end
+      @changes = Hash.new
     else
       puts "Cannot save data"
     end
   end
 
   def flush
-    file = File.new(@filename, "a+")
+    file = File.new(@filename, "a")
     if file
       @changes.each do |key, value|
-        s = self.linestring(key, value)
-        file.syswrite(s)
+        unless key.to_s.empty?
+          s = self.linestring(key, value)
+          file.syswrite(s)
+        end
       end
       @changes = Hash.new
     else
@@ -64,8 +70,10 @@ class KeyValue
     @changes = Hash.new
     if not @filename.nil? and File.exist?(@filename)
       File.foreach(@filename) do |line|
-        pair = line.split(":", 2)
-        @data[pair[0]] = pair[1]
+        unless line.empty?
+          pair = line.split(":", 2)
+          @data[pair[0]] = pair[1]
+        end
       end
     end
   end
@@ -74,6 +82,6 @@ class KeyValue
 
   #TODO escape certain characters like newlines.
   def linestring(key, value)
-    return "#{key}: #{value}"
+    return "#{key}: #{value}\n"
   end
 end
