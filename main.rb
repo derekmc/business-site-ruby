@@ -8,7 +8,7 @@ require 'sinatra'
 
 require_relative 'keyvalue'
 
-db = KeyValue.new "demoapp.kv"
+db = KeyValue.new({:filename => "demoapp.kv"})
 
 get '/' do
   count = db.get("count").to_i

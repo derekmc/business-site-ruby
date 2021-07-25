@@ -5,25 +5,40 @@
 # file, and old entries are not removed
 
 class KeyValue
-  def initialize(filename="appdata.txt", savemode=:autoflush) # savemode :autoflush :autosave or :manual
-    @filename = filename
-    @savemode = savemode
+
+  def initialize props
+    @config = {
+      :filename => "appdata.txt",
+      :savemode => "autoflush", # savemode :autoflush :autosave or :manual
+      :backupmode => "load", # backupmode :load :manual :1hr :8hr :
+      :backups => "backups",
+    }
+    self.setConfig props
     self.load
-    self.save # this rewrites the database without overwritten key entries
+    self.save # rewrite database without overwritten entries
   end
 
   def get(k)
     return @data[k]
   end
 
+  def setConfig props
+    props.each do |key, value|
+      unless key.to_s.strip.empty?
+        @config[key] = value
+      end
+    end
+  end
+
   def setfile filename
-    @filename = filename
+    @config[:filename] = filename
   end
 
   def set(k, v)
     @data[k] = v
     @changes[k] = v
-    case @savemode
+    savemode = @config[:savemode]
+    case savemode
       when :autoflush
         puts "flushing..."
         self.flush
@@ -36,7 +51,11 @@ class KeyValue
   end
 
   def save
-    file = File.new(@filename, "w")
+    self.savepath @config[:filename]
+  end
+
+  def savepath path
+    file = File.new(path, "w")
     if file
       @data.each do |key, value|
         unless key.to_s.strip.empty?
@@ -50,8 +69,18 @@ class KeyValue
     end
   end
 
+  def backup
+    folder = @config[:backups]
+    unless File.directory? folder
+      File.mkdir folder
+    end
+    backupname = time.strftime("%Y%m%d_%H%M-") + @config[:filename]
+    path = File.join(folder, backupname)
+    self.savepath path
+  end
+
   def flush
-    file = File.new(@filename, "a")
+    file = File.new(@config[:filename], "a")
     if file
       @changes.each do |key, value|
         unless key.to_s.strip.empty?
@@ -68,8 +97,9 @@ class KeyValue
   def load
     @data = Hash.new
     @changes = Hash.new
-    if not @filename.nil? and File.exist?(@filename)
-      File.foreach(@filename) do |line|
+    filename = @config[:filename]
+    if not filename.nil? and File.exist?(filename)
+      File.foreach(filename) do |line|
         unless line.empty?
           pair = line.split(":", 2)
           @data[pair[0]] = pair[1]
