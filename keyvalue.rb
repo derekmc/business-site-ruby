@@ -9,7 +9,7 @@ class KeyValue
   def initialize props
     @config = {
       :filename => "appdata.txt",
-      :savemode => "autoflush", # savemode :autoflush :autosave or :manual
+      :savemode => :autoflush, # savemode :autoflush :autosave or :manual
       :backupmode => "load", # backupmode :load :manual :1hr :8hr :
       :backups => "backups",
     }
@@ -112,6 +112,6 @@ class KeyValue
 
   #TODO escape certain characters like newlines.
   def linestring(key, value)
-    return "#{key}: #{value}\n"
+    return "#{key}:#{value}\n"
   end
 end
