@@ -10,12 +10,15 @@ class KeyValue
     @config = {
       :filename => "appdata.txt",
       :savemode => :autoflush, # savemode :autoflush :autosave or :manual
-      :backupmode => "load", # backupmode :load :manual :1hr :8hr :
+      :backupmode => :onload, # backupmode :load :manual :1hr :8hr :
       :backups => "backups",
     }
     self.setConfig props
     self.load
     self.save # rewrite database without overwritten entries
+    if @config[:backupmode] == :onload
+      self.backup
+    end
   end
 
   def get(k)
@@ -72,8 +75,9 @@ class KeyValue
   def backup
     folder = @config[:backups]
     unless File.directory? folder
-      File.mkdir folder
+      Dir.mkdir folder
     end
+    time = Time.new
     backupname = time.strftime("%Y%m%d_%H%M-") + @config[:filename]
     path = File.join(folder, backupname)
     self.savepath path
