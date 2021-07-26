@@ -5,7 +5,7 @@
 # file, and old entries are not removed
 
 class KeyValue
-  @tableregex = /<([^\|>]+)\|([^\|>]+)\|([^\|>]+)>/
+  TableRegex = /<([^\|>]+)\|([^\|>]+)\|([^\|>]+)>/
 
   def initialize props
     @config = {
@@ -94,15 +94,15 @@ class KeyValue
     tables = Hash.new #table { index => {columns}}
     headers = Hash.new
     
+    puts @data
     @data.each do |key, value|
-      result = key.match(@tableregex)
+      result = key.match(TableRegex)
       if result
         tname = result[1]
-        index = result[2]
-        column = result[3]
+        column = result[2]
+        index = result[3]
 
-        tables[""][column] = "" # track headers
-        unless tables.has_key? table
+        unless tables.has_key? tname
           tables[tname] = Hash.new
           headers[tname] = Hash.new
         end
@@ -114,7 +114,9 @@ class KeyValue
         headers[tname][column] = ""
       else
         # write all entries, not in a table, to keyvalue.csv
-        kvfile.syswrite("#{key},#{value}\n")
+        unless key.empty?
+          kvfile.syswrite("#{key},#{value}\n")
+        end
       end
     end
     tables.each do |tname, table|
@@ -122,14 +124,14 @@ class KeyValue
       file = File.new(path, "w")
 
       header = headers[tname]
-      headerstr = ""
-      cols = hash.get_all_keys
+      headerstr = "Index,"
+      cols = header.keys
+      puts "cols:", cols
       cols.each { |col| headerstr += "#{col}," }
-      headerstr.chomp(",")
       if file
-        file.syswrite(headerstr + "\n")
+        file.syswrite(headerstr.chomp(",") + "\n")
         table.each do |index, data|
-          rowstr = ""
+          rowstr = "#{index},"
           cols.each { |col| rowstr += data[col] }
           rowstr.chomp(",")
           file.syswrite(rowstr + "\n")
@@ -191,9 +193,11 @@ class KeyValue
     filename = @config[:filename]
     if not filename.nil? and File.exist?(filename)
       File.foreach(filename) do |line|
-        unless line.empty?
-          pair = line.split(":", 2)
-          @data[pair[0]] = pair[1]
+        unless line.strip.empty?
+          pair = line.strip.split(":", 2)
+          unless pair[0].strip.empty?
+            @data[pair[0].strip] = pair[1].strip
+          end
         end
       end
     end
