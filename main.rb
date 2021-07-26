@@ -11,9 +11,9 @@ require_relative 'keyvalue'
 db = KeyValue.new({:filename => "demoapp.kv"})
 
 get '/' do
-  count = db.get("count").to_i
+  count = db.getTable("stats", "hits", "1").to_i
   count += 1
-  db.set("count", count)
+  db.setTable("stats", "hits", "1", count)
   #"Hello world! #{count}"
   erb :hello, :locals => {:count => count}
 end

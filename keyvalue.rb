@@ -5,6 +5,7 @@
 # file, and old entries are not removed
 
 class KeyValue
+  @tableregex = /<([^\|>]+)\|([^\|>]+)\|([^\|>]+)>/
 
   def initialize props
     @config = {
@@ -12,6 +13,7 @@ class KeyValue
       :savemode => :autoflush, # savemode :autoflush :autosave or :manual
       :backupmode => :onload, # backupmode :load :manual :1hr :8hr :
       :backups => "backups",
+      :tables => "csv",
     }
     self.setConfig props
     self.load
@@ -21,9 +23,6 @@ class KeyValue
     end
   end
 
-  def get(k)
-    return @data[k]
-  end
 
   def setConfig props
     props.each do |key, value|
@@ -33,11 +32,13 @@ class KeyValue
     end
   end
 
-  def setfile filename
-    @config[:filename] = filename
+  def get k
+    self.checkKey k
+    return @data[k]
   end
 
-  def set(k, v)
+  def set k, v
+    self.checkKey k
     @data[k] = v
     @changes[k] = v
     savemode = @config[:savemode]
@@ -50,6 +51,92 @@ class KeyValue
         self.save
       else
         @changes[k] = v
+    end
+  end
+
+  # 
+  def getTable(name, column, index)
+    if name == "keyvalue"
+      raise "keyvalue is a reserved table name"
+    end
+    if column == "Index"
+      raise "Index is a reserved column name"
+    end
+    key = "<#{name}|#{column}|#{index}>"
+    return self.get(key)
+  end
+
+  # table names are surrounded by angle brackets
+  def setTable(name, column, index, value)
+    if name == "keyvalue"
+      raise "keyvalue is a reserved table name"
+    end
+    if column == "Index"
+      raise "Index is a reserved column name"
+    end
+    key = "<#{name}|#{column}|#{index}>"
+    self.set(key, value)
+  end
+
+  def exportTables
+    folder = @config[:tables]
+    unless File.directory? folder
+      Dir.mkdir folder
+    end
+    kvfile = File.new(File.join(folder, "keyvalue.csv"), "w")
+    if kvfile
+      kvfile.syswrite("Key,Value\n")
+    else
+      raise "Cannot open file."
+    end
+
+    # the empty header is the column names.
+    tables = Hash.new #table { index => {columns}}
+    headers = Hash.new
+    
+    @data.each do |key, value|
+      result = key.match(@tableregex)
+      if result
+        tname = result[1]
+        index = result[2]
+        column = result[3]
+
+        tables[""][column] = "" # track headers
+        unless tables.has_key? table
+          tables[tname] = Hash.new
+          headers[tname] = Hash.new
+        end
+        table = tables[tname]
+        unless table.has_key? index
+          table[index] = Hash.new
+        end
+        table[index][column] = value
+        headers[tname][column] = ""
+      else
+        # write all entries, not in a table, to keyvalue.csv
+        kvfile.syswrite("#{key},#{value}\n")
+      end
+    end
+    tables.each do |tname, table|
+      path = File.join(folder, tname + ".csv")
+      file = File.new(path, "w")
+
+      header = headers[tname]
+      headerstr = ""
+      cols = hash.get_all_keys
+      cols.each { |col| headerstr += "#{col}," }
+      headerstr.chomp(",")
+      if file
+        file.syswrite(headerstr + "\n")
+        table.each do |index, data|
+          rowstr = ""
+          cols.each { |col| rowstr += data[col] }
+          rowstr.chomp(",")
+          file.syswrite(rowstr + "\n")
+        end
+      else
+        raise "Cannot open file."
+      end
     end
   end
 
@@ -117,5 +204,11 @@ class KeyValue
   #TODO escape certain characters like newlines.
   def linestring(key, value)
     return "#{key}:#{value}\n"
+  end
+
+  def checkKey(key)
+    if key.include? ":" or key.include? "\n"
+      raise "Invalid key, may not contain colons or newlines."
+    end
   end
 end
