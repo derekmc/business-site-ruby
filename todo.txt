@@ -1,3 +1,4 @@
+escape values with newlines, commas, or double quotes.
 KeyValue.backup function
 row based tables, and csv export.
 config file
