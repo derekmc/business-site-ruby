@@ -212,8 +212,8 @@ class KeyValue
   end
 
   def checkKey key
-    if key.include? ":" or key.include? "\n"
-      raise "Invalid key, may not contain colons or newlines."
+    if key.match(/[,:\n"]/)
+      raise "Invalid key, may not contain comma, colon, newlines, or double quotes."
     end
   end
 end

@@ -13,6 +13,23 @@ db.exportTables
 db.set("a", 5)
 
 get '/' do
+  erb :index
+end
+
+get '/create' do
+  erb :blank
+end
+
+get '/login' do
+  erb :blank
+end
+
+get '/info' do
+  erb :blank
+end
+
+
+get '/hello' do
   count = db.getTable("stats", "hits", "1").to_i
   count += 1
   db.setTable("stats", "hits", "1", count)
