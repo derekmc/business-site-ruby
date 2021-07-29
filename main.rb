@@ -8,7 +8,7 @@ require 'sinatra'
 
 require_relative 'keyvalue'
 
-db = KeyValue.new({:filename => "demoapp.kv"})
+db = KeyValue.new({:filename => "demoapp.db"})
 db.exportTables
 db.set("a", 5)
 

@@ -33,12 +33,12 @@ class KeyValue
   end
 
   def get k
-    self.checkKey k
+    checkKey k
     return @data[k]
   end
 
   def set k, v
-    self.checkKey k
+    checkKey k
     @data[k] = v
     @changes[k] = v
     savemode = @config[:savemode]
@@ -54,7 +54,7 @@ class KeyValue
     end
   end
 
-  # 
+  # TODO keep track of columns
   def getTable(name, column, index)
     if name == "keyvalue"
       raise "keyvalue is a reserved table name"
@@ -75,7 +75,8 @@ class KeyValue
       raise "Index is a reserved column name"
     end
     key = "<#{name}|#{column}|#{index}>"
-    self.set(key, value)
+    #self.
+    self.set key, value
   end
 
   def exportTables
@@ -94,7 +95,7 @@ class KeyValue
     tables = Hash.new #table { index => {columns}}
     headers = Hash.new
     
-    puts @data
+    # puts @data
     @data.each do |key, value|
       result = key.match(TableRegex)
       if result
@@ -151,7 +152,7 @@ class KeyValue
     if file
       @data.each do |key, value|
         unless key.to_s.strip.empty?
-          s = self.linestring(key, value)
+          s = linestring(key, value)
           file.syswrite(s)
         end
       end
@@ -177,7 +178,7 @@ class KeyValue
     if file
       @changes.each do |key, value|
         unless key.to_s.strip.empty?
-          s = self.linestring(key, value)
+          s = linestring(key, value)
           file.syswrite(s)
         end
       end
@@ -210,7 +211,7 @@ class KeyValue
     return "#{key}:#{value}\n"
   end
 
-  def checkKey(key)
+  def checkKey key
     if key.include? ":" or key.include? "\n"
       raise "Invalid key, may not contain colons or newlines."
     end
